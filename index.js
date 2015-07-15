@@ -75,7 +75,17 @@ JWT.sign = function(payload, secretOrPrivateKey, options) {
 
     payload.exp = timestamp + expiresInSeconds;
   } else if (options.expires) {
-    payload.exp = timestamp + (typeof options.expires === 'string' ? ms(options.expires) / 1000 : options.expires);
+    if (typeof options.expires === 'string') {
+      var milliseconds = ms(options.expires);
+      if (typeof milliseconds === 'undefined') {
+        throw new Error('bad "expires" format: ' + options.expires);
+      }
+      payload.exp = timestamp + milliseconds / 1000;
+    } else if (typeof options.expires === 'number' ) {
+      payload.exp = timestamp + options.expires;
+    } else {
+      throw new Error('"expires" should be a number of seconds or string representing a timespan eg: "1d", "20h", 60');
+    }
   }
 
   if (options.audience)

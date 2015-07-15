@@ -23,4 +23,17 @@ describe('expires option', function() {
     expect(result.exp).to.be.closeTo(Math.floor(Date.now() / 1000) + day_and_a_half_in_secs, 0.2);
   });
 
+
+  it('should throw if expires has a bad string format', function () {
+    expect(function () {
+      jwt.sign({foo: 123}, '123', { expires: '1 monkey' });
+    }).to.throw(/bad "expires" format: 1 monkey/);
+  });
+
+  it('should throw if expires is not an string or number', function () {
+    expect(function () {
+      jwt.sign({foo: 123}, '123', { expires: { crazy : 213 } });
+    }).to.throw(/"expires" should be a number of seconds or string representing a timespan/);
+  });
+
 });
