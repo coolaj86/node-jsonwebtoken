@@ -1,4 +1,5 @@
 var jws = require('jws');
+var ms = require('ms');
 
 var JWT = module.exports;
 
@@ -30,7 +31,7 @@ JWT.decode = function (jwt, options) {
       header: decoded.header,
       payload: payload,
       signature: decoded.signature
-    }
+    };
   }
   return payload;
 };
@@ -57,12 +58,24 @@ JWT.sign = function(payload, secretOrPrivateKey, options) {
     payload.iat = payload.iat || timestamp;
   }
 
-  var expiresInSeconds = options.expiresInMinutes ?
-      options.expiresInMinutes * 60 :
-      options.expiresInSeconds;
+  if (options.expiresInSeconds || options.expiresInMinutes) {
+    var deprecated_line;
+    try {
+      deprecated_line = /.*\((.*)\).*/.exec((new Error()).stack.split('\n')[2])[1];
+    } catch(err) {
+      deprecated_line = '';
+    }
 
-  if (expiresInSeconds) {
+    console.warn('jsonwebtoken: expiresInMinutes and expiresInSeconds is deprecated. (' + deprecated_line + ')\n' +
+                 'Use "expires" expressed in seconds.');
+
+    var expiresInSeconds = options.expiresInMinutes ?
+        options.expiresInMinutes * 60 :
+        options.expiresInSeconds;
+
     payload.exp = timestamp + expiresInSeconds;
+  } else if (options.expires) {
+    payload.exp = timestamp + (typeof options.expires === 'string' ? ms(options.expires) / 1000 : options.expires);
   }
 
   if (options.audience)
